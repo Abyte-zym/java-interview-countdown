@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java面试倒计时仪表盘 | 免费每日任务规划器</title>
+<meta name="description" content="输入面试日期，自动生成每日Java面试准备任务清单+进度追踪。免费工具，面试冲刺必备。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);min-height:100vh;color:#fff;padding:20px}
+.container{max-width:700px;margin:0 auto}
+h1{text-align:center;font-size:2em;margin:20px 0;background:linear-gradient(90deg,#f7971e,#ffd200);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.countdown{text-align:center;font-size:4em;font-weight:bold;margin:20px 0;text-shadow:0 0 20px rgba(247,151,30,0.5)}
+.countdown small{display:block;font-size:0.3em;color:#aaa;margin-top:5px}
+.setup{background:rgba(255,255,255,0.05);border-radius:12px;padding:25px;margin:20px 0}
+.setup input{width:100%;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;font-size:16px;margin:8px 0}
+.setup button{width:100%;padding:14px;border-radius:8px;border:none;background:linear-gradient(90deg,#f7971e,#ffd200);color:#000;font-size:18px;font-weight:bold;cursor:pointer;margin-top:10px}
+.task-list{margin:20px 0}
+.task-card{background:rgba(255,255,255,0.05);border-radius:10px;padding:15px;margin:10px 0;display:flex;align-items:center;gap:15px;border-left:3px solid #f7971e;transition:all 0.3s}
+.task-card.done{border-left-color:#4ecb71;opacity:0.6}
+.task-card input[type=checkbox]{width:22px;height:22px;cursor:pointer;accent-color:#4ecb71}
+.task-info{flex:1}
+.task-info h4{font-size:16px;margin-bottom:4px}
+.task-info p{font-size:13px;color:#aaa}
+.progress{background:rgba(255,255,255,0.1);border-radius:20px;height:12px;margin:20px 0;overflow:hidden}
+.progress-bar{height:100%;background:linear-gradient(90deg,#4ecb71,#38ef7d);border-radius:20px;transition:width 0.5s}
+.stats{display:flex;justify-content:space-around;text-align:center;margin:15px 0;font-size:14px}
+.stats span{color:#f7971e;font-weight:bold;font-size:20px}
+.donate-section{text-align:center;margin:40px 0;padding:25px;background:rgba(255,255,255,0.08);border-radius:12px}
+.donate-section img{max-width:180px;border-radius:8px}
+.premium-badge{display:inline-block;padding:4px 10px;background:linear-gradient(90deg,#f7971e,#ffd200);color:#000;border-radius:10px;font-size:11px;font-weight:bold;margin-left:8px}
+nav{margin:20px 0;text-align:center;font-size:13px}
+nav a{color:#f7971e;margin:0 8px;text-decoration:none}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>⏳ Java面试倒计时仪表盘</h1>
+
+<div class="setup" id="setupForm">
+  <h3>🎯 设定你的面试目标</h3>
+  <label>目标公司（可选）：<input type="text" id="company" placeholder="如：字节跳动、美团、快手..."></label>
+  <label>面试日期：<input type="date" id="interviewDate"></label>
+  <button onclick="startCountdown()">🚀 生成我的冲刺计划</button>
+</div>
+
+<div id="dashboard" class="hidden">
+  <div class="countdown" id="countdownDisplay">--<small id="countdownLabel"></small></div>
+  <div class="progress"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+  <div class="stats">
+    <div>✅ 已完成<br><span id="doneCount">0</span></div>
+    <div>📋 总任务<br><span id="totalCount">0</span></div>
+    <div>🔥 完成率<br><span id="rate">0%</span></div>
+  </div>
+  <div class="task-list" id="taskList"></div>
+  <div class="donate-section">
+    <h3>🔓 赞赏解锁完整30天冲刺计划</h3>
+    <p style="color:#aaa;margin:10px 0">免费版含7天基础任务。赞赏后解锁全部30天+AI面试预测+个性化复习路线</p>
+    <img src="mm_facetoface_collect_qrcode_1779427130944.png" alt="赞赏码">
+    <p style="font-size:12px;color:#666">微信扫一扫，解锁全部内容</p>
+  </div>
+</div>
+
+<nav>
+  <a href="https://Abyte-zym.github.io/arsenal">弹药库</a> |
+  <a href="https://Abyte-zym.github.io/java-career-blog">博客</a> |
+  <a href="https://Abyte-zym.github.io/java-interview-quiz">题库</a> |
+  <a href="https://Abyte-zym.github.io/java-resume-builder">简历</a> |
+  <a href="https://Abyte-zym.github.io/interview-simulator">模拟</a>
+</nav>
+</div>
+
+<script>
+const allTasks = {
+  1:[{task:'Java基础速览：HashMap+ConcurrentHashMap源码',detail:'重点：put流程、扩容机制、CAS+synchronized'},{task:'JVM内存区域+GC算法回顾',detail:'堆/栈/方法区、标记清除/复制/标记整理'}],
+  2:[{task:'Spring Boot核心概念梳理',detail:'自动配置原理、@SpringBootApplication拆解'},{task:'MySQL索引优化专项',detail:'B+树、最左前缀、EXPLAIN实战'}],
+  3:[{task:'Redis 5种数据类型+缓存策略',detail:'String/Hash/List/Set/ZSet、穿透击穿雪崩'},{task:'并发编程：synchronized锁升级+volatile',detail:'偏向锁→轻量级锁→重量级锁、可见性原理'}],
+  4:[{task:'项目一RAG知识库：完整叙述一遍',detail:'背景→难点→方案→成果，控制在2分钟'},{task:'手撕代码练习：LRU缓存',detail:'LinkedHashMap实现+手写双向链表版本'}],
+  5:[{task:'项目二秒杀系统：完整叙述一遍',detail:'限流→扣库存→异步下单→最终一致性'},{task:'消息队列面试10题速刷',detail:'Kafka/RocketMQ对比、消息可靠性、重复消费'}],
+  6:[{task:'系统设计场景题练习',detail:'短URL设计、Feed流、排行榜、分布式ID'},{task:'SQL手写练习',detail:'多表JOIN、窗口函数、递归CTE'}],
+  7:[{task:'Mock面试（录音自测）',detail:'自我介绍+两项目介绍+3道随机题，录完回听修正'},{task:'复习错题+薄弱点',detail:'回顾本周标注的所有薄弱点，针对性补强'}],
+  8:[{task:'🔒 第8天：微服务架构深度复习 [赞赏解锁]',detail:'Spring Cloud Alibaba全家桶、服务治理'},{task:'🔒 分布式事务6种方案对比 [赞赏解锁]',detail:'2PC/TCC/Seata/消息表/最大努力通知/Saga'}],
+  9:[{task:'🔒 AI大模型面试专题 [赞赏解锁]',detail:'RAG/Agent/Prompt工程/Spring AI 2.0'},{task:'🔒 行为面试话术训练 [赞赏解锁]',detail:'STAR法则、优缺点、职业规划'}]
+};
+
+function startCountdown(){
+  const date=document.getElementById('interviewDate').value;
+  if(!date){alert('请选择面试日期');return}
+  const target=new Date(date);
+  const now=new Date();
+  if(target<=now){alert('请选择未来的日期');return}
+  document.getElementById('setupForm').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+  updateDashboard(target);
+  setInterval(()=>updateDashboard(target),60000);
+}
+
+function updateDashboard(target){
+  const now=new Date();
+  const diff=target-now;
+  const daysLeft=Math.ceil(diff/(1000*60*60*24));
+  document.getElementById('countdownDisplay').innerHTML=daysLeft+'<small>天</small>';
+  document.getElementById('countdownLabel').textContent=target.toLocaleDateString('zh-CN')+' 面试';
+
+  const saved=JSON.parse(localStorage.getItem('interview-progress')||'{}');
+  const taskList=document.getElementById('taskList');
+  taskList.innerHTML='';
+  let done=0,total=0;
+
+  const maxDays=Object.keys(saved).includes('premium')?Object.keys(allTasks).length:7;
+  for(let day=1;day<=maxDays;day++){
+    const tasks=allTasks[day]||[];
+    tasks.forEach((t,i)=>{
+      total++;
+      const key=`d${day}t${i}`;
+      const isDone=saved[key];
+      if(isDone)done++;
+      const card=document.createElement('div');
+      card.className=`task-card${isDone?' done':''}`;
+      card.innerHTML=`
+        <input type="checkbox" ${isDone?'checked':''} onchange="toggleTask('${key}',this.checked)">
+        <div class="task-info">
+          <h4>📅 Day ${day}：${t.task}</h4>
+          <p>${t.detail||''}</p>
+        </div>
+      `;
+      taskList.appendChild(card);
+    });
+  }
+
+  document.getElementById('doneCount').textContent=done;
+  document.getElementById('totalCount').textContent=total;
+  document.getElementById('rate').textContent=total?Math.round(done/total*100)+'%':'0%';
+  document.getElementById('progressBar').style.width=(total?done/total*100:0)+'%';
+}
+
+function toggleTask(key,checked){
+  const saved=JSON.parse(localStorage.getItem('interview-progress')||'{}');
+  saved[key]=checked;
+  localStorage.setItem('interview-progress',JSON.stringify(saved));
+  updateDashboard(new Date(document.getElementById('interviewDate').value));
+}
+</script>
+</body>
+</html>
